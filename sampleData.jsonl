@@ -1,0 +1,15 @@
+{"name":"Documents","type":"folder","userId":"user_123","updatedAt":1729568000000,"trashed":false,"trashedAt":null}
+{"name":"Photos","type":"folder","userId":"user_123","updatedAt":1729827200000,"trashed":false,"trashedAt":null}
+{"name":"Projects","type":"folder","userId":"user_123","updatedAt":1729913600000,"trashed":false,"trashedAt":null}
+{"name":"Meeting Notes","type":"folder","userId":"user_123","updatedAt":1729740800000,"trashed":false,"trashedAt":null}
+{"name":"Resume.pdf","type":"file","userId":"user_123","mimeType":"application/pdf","size":245760,"updatedAt":1729740800000,"trashed":false,"trashedAt":null}
+{"name":"Team Photo.jpg","type":"file","userId":"user_123","mimeType":"image/jpeg","size":3932160,"updatedAt":1729913600000,"trashed":false,"trashedAt":null}
+{"name":"Quarterly Report.pdf","type":"file","userId":"user_123","mimeType":"application/pdf","size":2516582,"updatedAt":1729568000000,"trashed":false,"trashedAt":null}
+{"name":"Budget.xlsx","type":"file","userId":"user_123","mimeType":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet","size":1887437,"updatedAt":1729827200000,"trashed":false,"trashedAt":null}
+{"name":"Presentation.pptx","type":"file","userId":"user_123","mimeType":"application/vnd.openxmlformats-officedocument.presentationml.presentation","size":5452595,"updatedAt":1729654400000,"trashed":false,"trashedAt":null}
+{"name":"Product Demo.mp4","type":"file","userId":"user_123","mimeType":"video/mp4","size":29989888,"updatedAt":1729481600000,"trashed":false,"trashedAt":null}
+{"name":"Interview Recording.mp3","type":"file","userId":"user_123","mimeType":"audio/mpeg","size":12902400,"updatedAt":1729913600000,"trashed":false,"trashedAt":null}
+{"name":"Company Handbook.pdf","type":"file","userId":"user_123","mimeType":"application/pdf","size":4404019,"updatedAt":1729827200000,"trashed":false,"trashedAt":null}
+{"name":"Contract.docx","type":"file","parentId":"folder_1","userId":"user_123","mimeType":"application/vnd.openxmlformats-officedocument.wordprocessingml.document","size":524288,"updatedAt":1729568000000,"trashed":false,"trashedAt":null}
+{"name":"Legal","type":"folder","parentId":"folder_1","userId":"user_123","updatedAt":1729308800000,"trashed":false,"trashedAt":null}
+{"name":"terms-of-service.pdf","type":"file","parentId":"folder_4","userId":"user_123","mimeType":"application/pdf","size":327680,"updatedAt":1729308800000,"trashed":false,"trashedAt":null}
