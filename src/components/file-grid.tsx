@@ -14,6 +14,17 @@ import {
 import { useQuery } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 
+interface FileItem {
+  _id: string;
+  name: string;
+  type: "file" | "folder";
+  parentId?: string;
+  userId: string;
+  mimeType?: string;
+  size?: number;
+  updatedAt: number;
+  trashed?: boolean;
+}
 
 const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return "0 Bytes";
@@ -185,6 +196,13 @@ export interface BreadcrumbItem {
   path: string[];
 }
 
+const findFolderById = (
+  files: FileItem[], 
+  folderId: string
+): FileItem | null => {
+  return files.find(file => file._id === folderId) || null;
+};
+
 export const generateBreadcrumbs = (
   files: FileItem[], 
   pathSegments: string[]
@@ -193,14 +211,14 @@ export const generateBreadcrumbs = (
     { name: "My Drive", path: [] }
   ];
 
-  for (let i = 0; i < pathSegments.length; i++) {
-    const currentPath = pathSegments.slice(0, i + 1);
-    const folder = findFolderByPath(files, currentPath);
-
+  let currentPath: string[] = [];
+  for (const segment of pathSegments) {
+    currentPath.push(segment);
+    const folder = findFolderById(files, segment);
     if (folder) {
       breadcrumbs.push({
         name: folder.name,
-        path: currentPath
+        path: [...currentPath]
       });
     }
   }
@@ -216,13 +234,44 @@ export function FileGrid({ currentPath }: FileGridProps) {
   const [selectedFiles, setSelectedFiles] = useState<string[]>([])
   const [previewFile, setPreviewFile] = useState<FileItem | null>(null)
   const router = useRouter()
-  const parentId = 
+  
+  // Temporary user ID - replace with real auth later
+  const userId = "user_123"
 
-  const currentFiles = useQuery(api.files.getFiles, {userId: user123, parentId: });
-  const breadcrumbs = generateBreadcrumbs(userFiles, currentPath);
+  // Find the current folder using the path segments
+  const currentFolder = useQuery(api.files.findFolderByPath, {
+    userId,
+    pathSegments: currentPath
+  });
 
-  const folders = currentFiles?.filter((file) => file.type === "folder")
-  const regularFiles = currentFiles?.filter((file) => file.type === "file")
+  // Get the parentId from the current folder
+  const parentId = currentFolder?._id;
+
+  // Fetch folders and files using Convex queries
+  const folders = useQuery(api.files.getFolders, {
+    userId,
+    parentId
+  });
+
+  const files = useQuery(api.files.getFiles, {
+    userId,
+    parentId
+  });
+
+  // Generate breadcrumbs
+  const breadcrumbs: BreadcrumbItem[] = [
+    { name: "My Drive", path: [] }
+  ];
+
+  // Build breadcrumbs based on the current path
+  let currentPathSegments: string[] = [];
+  for (const segment of currentPath) {
+    currentPathSegments.push(segment);
+    breadcrumbs.push({
+      name: segment,
+      path: [...currentPathSegments]
+    });
+  }
 
   const toggleFileSelection = (id: string) => {
     if (selectedFiles.includes(id)) {
@@ -242,8 +291,7 @@ export function FileGrid({ currentPath }: FileGridProps) {
 
   const handleItemClick = (file: FileItem) => {
     if (file.type === "folder") {
-      const folderPath = file.name.toLowerCase().replace(/\s+/g, "-")
-      router.push(`/folder/${currentPath}/${folderPath}`)
+      router.push(`/folder/${[...currentPath, file.name].join('/')}`)
     } else {
       setPreviewFile(file)
     }
@@ -343,7 +391,7 @@ index === breadcrumbs.length - 1
     </div>
 
     <div className="space-y-6">
-      {folders.length === 0 && regularFiles.length === 0 && (
+      {(!folders || folders.length === 0) && (!files || files.length === 0) && (
         <div className="text-center py-12">
           <Folder className="h-16 w-16 text-gray-600 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-400 mb-2">This folder is empty</h3>
@@ -351,7 +399,7 @@ index === breadcrumbs.length - 1
         </div>
       )}
 
-      {folders.length > 0 && (
+      {folders && folders.length > 0 && (
         <div>
           <h3 className="text-sm font-medium text-gray-400 mb-3">Folders</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -362,11 +410,11 @@ index === breadcrumbs.length - 1
         </div>
       )}
 
-      {regularFiles.length > 0 && (
+      {files && files.length > 0 && (
         <div>
           <h3 className="text-sm font-medium text-gray-400 mb-3">Files</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {regularFiles.map((file) => (
+            {files.map((file) => (
               <FileItemComponent key={file._id} file={file} />
             ))}
           </div>

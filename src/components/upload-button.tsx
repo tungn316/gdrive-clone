@@ -1,7 +1,7 @@
 "use client"
 import { Plus, Upload, FolderPlus } from "lucide-react"
 import { useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { useParams } from "next/navigation"
 import { useMutation } from "convex/react"
 import { api } from "@/../convex/_generated/api"
 import { Button } from "@/components/ui/button"
@@ -12,8 +12,9 @@ const MOCK_USER_ID = "user_123"
 
 export function UploadButton() {
   const [isUploading, setIsUploading] = useState(false)
-  const searchParams = useSearchParams()
-  const currentFolderId = searchParams.get("folderId") || null
+  const params = useParams()
+  const currentPath = params.path as string[] || []
+  const currentFolderId = currentPath.length > 0 ? currentPath[currentPath.length - 1] : undefined
 
   const createFile = useMutation(api.files.createFile)
   const createFolder = useMutation(api.files.createFolder)
