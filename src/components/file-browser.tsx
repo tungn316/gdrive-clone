@@ -18,7 +18,8 @@ import {
   Eye,
   Trash2,
   Undo2,
-  CircleX
+  CircleX,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button"
 import {
@@ -28,7 +29,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "@/../convex/_generated/api";
 import type { Doc, Id } from '@/../convex/_generated/dataModel'
 
@@ -196,25 +197,23 @@ export function FileBrowser({ folderId, isTrashView }: FileBrowserProps) {
   const [selectedFiles, setSelectedFiles] = useState<string[]>([])
   const [previewFile, setPreviewFile] = useState<Doc<'files'> | null>(null)
   const router = useRouter()
-
-  // Temporary user ID - replace with real auth later
-  const userId = "user_123"
+  const { isLoading: authIsLoading, isAuthenticated } = useConvexAuth();
 
   const trashedItems = useQuery(
-    api.files.getTrashedFiles,
-    isTrashView ? { userId } : 'skip' // If in trash view, run query. Otherwise, skip.
+    api.files.getTrashedItems,
+    isAuthenticated && isTrashView ? {} : 'skip'
   );
   const driveFolders = useQuery(
     api.files.getFolders,
-    !isTrashView ? { userId, parentId: folderId } : 'skip' // If in drive view, run query. Otherwise, skip.
+    isAuthenticated && !isTrashView ? { parentId: folderId } : 'skip'
   );
   const driveFiles = useQuery(
     api.files.getFiles,
-    !isTrashView ? { userId, parentId: folderId } : 'skip' // If in drive view, run query. Otherwise, skip.
+    isAuthenticated && !isTrashView ? { parentId: folderId } : 'skip'
   );
   const breadcrumbs = useQuery(
     api.files.getAncestors,
-    !isTrashView ? { folderId } : 'skip' // If in drive view, run query. Otherwise, skip.
+    isAuthenticated && !isTrashView ? { folderId } : 'skip'
   );
 
   // --- CORRECTED: Unify data source for rendering ---
@@ -224,6 +223,9 @@ export function FileBrowser({ folderId, isTrashView }: FileBrowserProps) {
   const trashMutation = useMutation(api.files.trash);
   const permanentlyDeleteMutation = useMutation(api.files.permanentlyDelete);
   const restoreMutation = useMutation(api.files.restore); // Only if restoring from *this* view
+  const renameMutation = useMutation(api.files.rename); // NEW: Add the rename mutation hook
+
+  const isLoading = authIsLoading || folders === undefined || files === undefined || (!isTrashView && breadcrumbs === undefined);
 
   const toggleFileSelection = (id: string) => {
     if (selectedFiles.includes(id)) {
@@ -280,6 +282,28 @@ export function FileBrowser({ folderId, isTrashView }: FileBrowserProps) {
     }
   };
 
+  const handleRename = async (fileId: Id<"files">, currentName: string) => {
+    const newName = window.prompt("Enter new name:", currentName);
+
+    if (newName === null || newName.trim() === "") {
+      // User cancelled or entered an empty name
+      return;
+    }
+
+    if (newName === currentName) {
+      // No change, do nothing
+      return;
+    }
+
+    try {
+      await renameMutation({ id: fileId, newName: newName.trim() });
+      // Optional: Show a success toast
+    } catch (error) {
+      console.error("Failed to rename file:", error);
+      alert("Failed to rename. Please try again.");
+    }
+  };
+
   const handleItemClick = (file: Doc<"files">) => {
     if (file.type === "folder") {
       // Navigate directly to the folder's ID
@@ -332,7 +356,7 @@ export function FileBrowser({ folderId, isTrashView }: FileBrowserProps) {
               <span className="sr-only">More options</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-gray-800 border-gray-700">
+          <DropdownMenuContent align="end" className="bg-gray-800 text-gray-400 border-gray-700">
             {isTrashView ? (
               <>
                 <DropdownMenuItem
@@ -340,7 +364,7 @@ export function FileBrowser({ folderId, isTrashView }: FileBrowserProps) {
                     e.stopPropagation();
                     handleRestore(file._id, file.name);
                   }}
-                  className="cursor-pointer text-white"
+                  className="cursor-pointer"
                 >
                   <Undo2 className="mr-2 h-4 w-4" /> Restore
                 </DropdownMenuItem>
@@ -364,13 +388,13 @@ export function FileBrowser({ folderId, isTrashView }: FileBrowserProps) {
                         e.stopPropagation();
                         setPreviewFile(file);
                       }}
-                      className="cursor-pointer text-white"
+                      className="cursor-pointer"
                     >
-                      <Eye className="mr-2 h-4 w-4 text-white" /> Preview
+                      <Eye className="mr-2 h-4 w-4" /> Preview
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       asChild
-                      className="cursor-pointer text-white"
+                      className="cursor-pointer"
                     >
                       <a
                         href={file.url}
@@ -380,7 +404,7 @@ export function FileBrowser({ folderId, isTrashView }: FileBrowserProps) {
                         onClick={(e) => e.stopPropagation()} // Already there, which is good
                         className='flex items-center'
                       >
-                        <Download className='mr-2 h-4 w-4 text-white' />
+                        <Download className='mr-2 h-4 w-4' />
                         <span>Download</span>
                       </a>
                     </DropdownMenuItem>
@@ -388,8 +412,11 @@ export function FileBrowser({ folderId, isTrashView }: FileBrowserProps) {
                   </>
                 )}
                 <DropdownMenuItem
-                  onClick={(e) => e.stopPropagation()} // ADD e.stopPropagation() here for Rename
-                  className="cursor-pointer text-white"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRename(file._id, file.name);
+                  }}
+                  className="cursor-pointer"
                 >
                   Rename
                 </DropdownMenuItem>
@@ -423,6 +450,14 @@ export function FileBrowser({ folderId, isTrashView }: FileBrowserProps) {
 
 
   // --- Main Return ---
+  if (authIsLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
+        <Loader2 className="animate-spin h-8 w-8 mr-2" /> Authenticating...
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="flex items-center justify-between mb-6">
@@ -444,31 +479,45 @@ export function FileBrowser({ folderId, isTrashView }: FileBrowserProps) {
         )}
       </div>
 
-      {(!folders || folders.length === 0) && (!files || files.length === 0) && (
-        <div className="text-center py-12">
-          <Folder className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-400 mb-2">
-            {isTrashView ? "Trash is empty" : "This folder is empty"}
-          </h3>
+      {isLoading ? (
+        <div className="text-center py-12 flex flex-col items-center justify-center">
+          <Loader2 className="animate-spin h-10 w-10 text-blue-500 mb-4" />
+          <p className="text-gray-400 text-lg">Loading contents...</p>
         </div>
-      )}
+      ) : (
+        <>
+          {/* Your empty state, folders, and files rendering are now nested inside this 'else' block */}
+          {(!folders || folders.length === 0) && (!files || files.length === 0) ? (
+            <div className="text-center py-12">
+              <Folder className="h-16 w-16 text-gray-600 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-400 mb-2">
+                {isTrashView ? "Trash is empty" : "This folder is empty"}
+              </h3>
+              {!isTrashView && <p className="text-gray-500">Upload files or create folders to get started</p>}
+            </div>
+          ) : (
+            // Only render content if not empty and not loading
+            <>
+              {folders && folders.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-400 mb-3">Folders</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {folders.map((folder) => <FileItemComponent key={folder._id} file={folder} />)}
+                  </div>
+                </div>
+              )}
 
-      {folders && folders.length > 0 && (
-        <div>
-          <h3 className="text-sm font-medium text-gray-400 mb-3">Folders</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {folders.map((folder) => <FileItemComponent key={folder._id} file={folder} />)}
-          </div>
-        </div>
-      )}
-
-      {files && files.length > 0 && (
-        <div>
-          <h3 className="text-sm font-medium text-gray-400 mb-3">Files</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {files.map((file) => <FileItemComponent key={file._id} file={file} />)}
-          </div>
-        </div>
+              {files && files.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-400 mb-3">Files</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {files.map((file) => <FileItemComponent key={file._id} file={file} />)}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </>
       )}
 
       <FilePreviewModal file={previewFile} isOpen={!!previewFile} onClose={() => setPreviewFile(null)} />

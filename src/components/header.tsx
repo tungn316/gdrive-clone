@@ -1,18 +1,20 @@
 "use client"
 
 import { useState } from "react"
-import { Bell, Grid, HelpCircle, List, Menu, Search, Settings, X } from "lucide-react"
+import { Menu, Search, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { UserButton } from "@clerk/nextjs";
 
 export function Header() {
   const [searchValue, setSearchValue] = useState("")
-  const [isGridView, setIsGridView] = useState(true)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   return (
     <header className="border-b border-gray-700 bg-gray-800 sticky top-0 z-10">
+      {/* CORRECTED: This single div is now the main flex container */}
       <div className="flex items-center justify-between px-4 h-16">
+        {/* Mobile menu toggle (left-aligned) */}
         <div className="flex items-center md:hidden">
           <Button
             variant="ghost"
@@ -25,7 +27,8 @@ export function Header() {
           </Button>
         </div>
 
-        <div className="flex-1 max-w-xl mx-4">
+        {/* Search Bar (middle, takes up available space) */}
+        <div className="flex-1 max-w-xl mx-4"> {/* flex-1 allows it to grow */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
@@ -49,6 +52,10 @@ export function Header() {
           </div>
         </div>
 
+        {/* Right-aligned User Button and other icons */}
+        <div className="flex items-center gap-4"> {/* This is now a direct child */}
+          <UserButton afterSignOutUrl="/" />
+        </div>
       </div>
 
       {isMobileMenuOpen && (
@@ -67,9 +74,8 @@ function MobileNavItem({ text, active = false }: { text: string; active?: boolea
   return (
     <a
       href="#"
-      className={`block px-3 py-2 rounded-md text-base font-medium ${
-        active ? "bg-blue-900 text-blue-300" : "text-gray-300 hover:bg-gray-700"
-      }`}
+      className={`block px-3 py-2 rounded-md text-base font-medium ${active ? "bg-blue-900 text-blue-300" : "text-gray-300 hover:bg-gray-700"
+        }`}
     >
       {text}
     </a>

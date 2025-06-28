@@ -5,6 +5,8 @@ import { ConvexClientProvider } from "./ConvexClientProvider";
 import { NextSSRPlugin } from '@uploadthing/react/next-ssr-plugin';
 import { extractRouterConfig } from 'uploadthing/server';
 import { ourFileRouter } from '@/app/api/uploadthing/core'
+import { ClerkProvider } from '@clerk/nextjs'
+import { dark } from '@clerk/themes';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,15 +29,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <ConvexClientProvider>
-          <NextSSRPlugin routerConfig={extractRouterConfig(ourFileRouter)} />
-          {children}
-        </ConvexClientProvider>
-      </body>
-    </html>
+    <ClerkProvider appearance={{
+      baseTheme: dark, // Apply the dark theme globally
+      elements: {
+        formButtonPrimary: "bg-blue-600 hover:bg-blue-700",
+        socialButtonsBlockButton: "bg-gray-700 hover:bg-gray-600 border-gray-600",
+        card: "bg-gray-800", // Example: if card needs custom styling not covered by dark theme
+        rootBox: "justify-center" // Helps with centering
+      }
+    }}>
+      <html lang="en">
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        >
+          <ClerkProvider>
+            <ConvexClientProvider>
+              <NextSSRPlugin routerConfig={extractRouterConfig(ourFileRouter)} />
+              {children}
+            </ConvexClientProvider>
+          </ClerkProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

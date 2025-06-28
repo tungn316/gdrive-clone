@@ -5,16 +5,23 @@ import type React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation" // NEW: Import usePathname
 import { Clock, Cloud, Computer, FileText, ImageIcon, Share2, Star, Trash2, Users } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 export function Sidebar() {
   const pathname = usePathname() // NEW: Get the current pathname
+  const router = useRouter()
 
   return (
     <aside className="w-64 border-r border-gray-700 h-full hidden md:block bg-gray-800">
       <div className="p-4">
         <div className="flex items-center gap-2 px-4 py-2 mb-6">
-          <Cloud className="h-6 w-6 text-blue-400" />
-          <span className="text-xl font-semibold text-white">Drive</span>
+          <button
+            onClick={() => router.push("/")}
+            className="flex items-center gap-2 cursor-pointer" // Added 'flex' and 'items-center' to align them side-by-side
+          >
+            <Cloud className="h-6 w-6 text-blue-400" />
+            <span className="text-xl font-semibold text-white">Drive</span>
+          </button>
         </div>
 
         <div className="space-y-1">

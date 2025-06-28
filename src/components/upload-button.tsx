@@ -2,7 +2,7 @@
 import { Plus, Upload, FolderPlus } from "lucide-react";
 import { useState } from "react";
 import { useParams } from "next/navigation";
-import { useMutation } from "convex/react";
+import { useMutation, useConvexAuth } from "convex/react";
 import { useUploadThing } from "@/utils/uploadthing"; // Correct path to your generated hook
 import { api } from "@/../convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -14,13 +14,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { Id } from "@/../convex/_generated/dataModel"; // Import Id type
 
-// Mock user ID - in a real app, get this from authentication
-const MOCK_USER_ID = "user_123";
-
 export function UploadButton() {
   const [isUploading, setIsUploading] = useState(false);
   const params = useParams();
   const currentFolderId = params.folderId as Id<"files"> | undefined; // Cast to Id<"files"> for type safety
+  const { isAuthenticated } = useConvexAuth();
 
   const createFile = useMutation(api.files.createFile);
   const createFolder = useMutation(api.files.createFolder);
@@ -33,11 +31,9 @@ export function UploadButton() {
       for (const file of res) {
         await createFile({
           name: file.name,
-          type: "file",
           mimeType: file.type || "application/octet-stream",
           size: file.size,
           parentId: currentFolderId,
-          userId: MOCK_USER_ID,
           url: file.url,
           fileKey: file.key,
         });
@@ -55,6 +51,10 @@ export function UploadButton() {
   });
 
   const handleFileUpload = () => {
+    if (!isAuthenticated) {
+      alert("You must be logged in to upload files.");
+      return;
+    }
     const input = document.createElement("input");
     input.type = "file";
     input.multiple = true;
@@ -69,13 +69,16 @@ export function UploadButton() {
   };
 
   const handleCreateFolder = async () => {
+    if (!isAuthenticated) {
+      alert("You must be logged in to create folders.");
+      return;
+    }
     const folderName = prompt("Enter folder name:");
     if (folderName && folderName.trim()) {
       try {
         await createFolder({
           name: folderName.trim(),
           parentId: currentFolderId,
-          userId: MOCK_USER_ID,
         });
       } catch (error) {
         console.error("Failed to create folder:", error);
@@ -85,7 +88,7 @@ export function UploadButton() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger asChild disabled={!isAuthenticated}>
         <Button className="bg-blue-600 hover:bg-blue-700 text-white">
           {isUploading ? (
             <>

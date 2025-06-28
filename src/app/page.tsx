@@ -1,9 +1,26 @@
+'use client'
+
 import { FileBrowser } from "@/components/file-browser"
 import { Header } from "@/components/header"
 import { Sidebar } from "@/components/sidebar"
 import { UploadButton } from "@/components/upload-button"
+import { Authenticated, Unauthenticated } from "convex/react";
+import { SignInButton } from "@clerk/nextjs";
 
 export default function Home() {
+  return (
+    <>
+      <Authenticated>
+        <Content />
+      </Authenticated>
+      <Unauthenticated>
+        <SignInButton />
+      </Unauthenticated>
+    </>
+  );
+}
+
+function Content() {
   return (
     <div className="flex h-screen bg-gray-900">
       <Sidebar />
