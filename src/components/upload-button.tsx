@@ -3,7 +3,7 @@ import { Plus, Upload, FolderPlus } from "lucide-react";
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useMutation, useConvexAuth } from "convex/react";
-import { useUploadThing } from "@/utils/uploadthing"; // Correct path to your generated hook
+import { useUploadThing } from "@/utils/uploadthing";
 import { api } from "@/../convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,12 +12,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Id } from "@/../convex/_generated/dataModel"; // Import Id type
+import type { Id } from "@/../convex/_generated/dataModel";
+import {
+  createFileInput,
+  promptFolderName,
+  validateAuthForUpload,
+  validateAuthForFolder
+} from "@/utils/upload-utils";
 
 export function UploadButton() {
   const [isUploading, setIsUploading] = useState(false);
   const params = useParams();
-  const currentFolderId = params.folderId as Id<"files"> | undefined; // Cast to Id<"files"> for type safety
+  const currentFolderId = params.folderId as Id<"files"> | undefined;
   const { isAuthenticated } = useConvexAuth();
 
   const createFile = useMutation(api.files.createFile);
@@ -51,33 +57,22 @@ export function UploadButton() {
   });
 
   const handleFileUpload = () => {
-    if (!isAuthenticated) {
-      alert("You must be logged in to upload files.");
-      return;
-    }
-    const input = document.createElement("input");
-    input.type = "file";
-    input.multiple = true;
-    input.onchange = async (e) => {
-      const target = e.target as HTMLInputElement;
-      if (target.files && target.files.length > 0) {
-        const files = Array.from(target.files);
-        await startUpload(files);
-      }
-    };
-    input.click();
+    if (!validateAuthForUpload(isAuthenticated)) return;
+    
+    createFileInput(async (files) => {
+      const fileArray = Array.from(files);
+      await startUpload(fileArray);
+    });
   };
 
   const handleCreateFolder = async () => {
-    if (!isAuthenticated) {
-      alert("You must be logged in to create folders.");
-      return;
-    }
-    const folderName = prompt("Enter folder name:");
-    if (folderName && folderName.trim()) {
+    if (!validateAuthForFolder(isAuthenticated)) return;
+    
+    const folderName = promptFolderName();
+    if (folderName) {
       try {
         await createFolder({
-          name: folderName.trim(),
+          name: folderName,
           parentId: currentFolderId,
         });
       } catch (error) {

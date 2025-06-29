@@ -3,21 +3,24 @@
 
 import type React from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation" // NEW: Import usePathname
+import { usePathname } from "next/navigation"
 import { Cloud, Computer, Trash2 } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useNavigation, calculateStorageUsage, formatStorageSize } from "@/utils/navigation-utils"
 
 export function Sidebar() {
-  const pathname = usePathname() // NEW: Get the current pathname
-  const router = useRouter()
+  const pathname = usePathname()
+  const { navigateToHome } = useNavigation()
+
+  // Example storage data - in a real app this would come from your backend
+  const storageData = calculateStorageUsage(10.5 * 1024 * 1024 * 1024, 30 * 1024 * 1024 * 1024) // 10.5GB of 30GB
 
   return (
     <aside className="w-64 border-r border-gray-700 h-full hidden md:block bg-gray-800">
       <div className="p-4">
         <div className="flex items-center gap-2 px-4 py-2 mb-6">
           <button
-            onClick={() => router.push("/")}
-            className="flex items-center gap-2 cursor-pointer" // Added 'flex' and 'items-center' to align them side-by-side
+            onClick={navigateToHome}
+            className="flex items-center gap-2 cursor-pointer"
           >
             <Cloud className="h-6 w-6 text-blue-400" />
             <span className="text-xl font-semibold text-white">Drive</span>
@@ -25,7 +28,6 @@ export function Sidebar() {
         </div>
 
         <div className="space-y-1">
-          {/* CORRECTED: Conditionally set active prop */}
           <SidebarItem href="/" icon={<Computer className="h-4 w-4" />} text="My Drive" active={pathname === "/"} />
           <SidebarItem href="/trash" icon={<Trash2 className="h-4 w-4" />} text="Trash" active={pathname === "/trash"} />
           {/* Add more items if needed */}
@@ -40,9 +42,14 @@ export function Sidebar() {
           <h3 className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Storage</h3>
           <div className="px-4">
             <div className="w-full bg-gray-700 rounded-full h-2.5">
-              <div className="bg-blue-500 h-2.5 rounded-full w-[45%]"></div>
+              <div 
+                className="bg-blue-500 h-2.5 rounded-full" 
+                style={{ width: `${storageData.percentage}%` }}
+              ></div>
             </div>
-            <p className="text-xs text-gray-400 mt-2">10.5 GB of 30 GB used</p>
+            <p className="text-xs text-gray-400 mt-2">
+              {formatStorageSize(storageData.used)} of {formatStorageSize(storageData.total)} used
+            </p>
           </div>
         </div>
       </div>
@@ -54,7 +61,7 @@ function SidebarItem({
   href,
   icon,
   text,
-  active = false, // Keep default, but it will be overridden by the parent
+  active = false,
 }: {
   href: string
   icon: React.ReactNode
@@ -64,8 +71,9 @@ function SidebarItem({
   return (
     <Link
       href={href}
-      className={`flex items-center gap-3 px-4 py-2 text-sm rounded-full ${active ? "bg-blue-900 text-blue-300 font-medium" : "text-gray-300 hover:bg-gray-700"
-        }`}
+      className={`flex items-center gap-3 px-4 py-2 text-sm rounded-full ${
+        active ? "bg-blue-900 text-blue-300 font-medium" : "text-gray-300 hover:bg-gray-700"
+      }`}
     >
       {icon}
       <span>{text}</span>
