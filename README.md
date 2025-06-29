@@ -2,6 +2,8 @@
 
 Used v0 for base of frontend. G-drive clone using nextjs, convex db, uploadthing and clerk
 
+https://gdrive-clone-tungn316s-projects.vercel.app/
+
 LLM output below btw not my fault if anything is incorrect =D
 
 A Google Drive clone built with modern web technologies, featuring file upload, folder management, and cloud storage capabilities.
