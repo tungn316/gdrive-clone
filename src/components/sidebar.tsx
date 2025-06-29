@@ -4,7 +4,7 @@
 import type React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation" // NEW: Import usePathname
-import { Clock, Cloud, Computer, FileText, ImageIcon, Share2, Star, Trash2, Users } from "lucide-react"
+import { Cloud, Computer, Trash2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 export function Sidebar() {
